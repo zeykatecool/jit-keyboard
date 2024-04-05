@@ -2,7 +2,7 @@
 Keyboard module for LuaJIT and Luvit.
 
 # Dependencies
-FFI module,keys.lua.
+`FFI`, [keys.lua](https://github.com/zeykatecool/jit-keyboard/blob/main/keys.lua).
 
 # Example of Usage
 ```lua
