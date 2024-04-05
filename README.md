@@ -1,6 +1,9 @@
 # jit-keyboard
 Keyboard module for LuaJIT and Luvit.
 
+ # Working on Lua
+Also you can use with this packages like [cffi-lua](https://github.com/q66/cffi-lua).Just change `ffi` to `cffi` and you are ready to use.
+
 # Dependencies
 `FFI`, [keys.lua](https://github.com/zeykatecool/jit-keyboard/blob/main/keys.lua).
 
