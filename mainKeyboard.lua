@@ -10,7 +10,7 @@
 
 local FFI = require("ffi")
 local C = FFI.C
-local KeysController = require("keys")
+local KeysController = require("deps.keys")
 local keytonumber = KeysController.keytonumber
 local numbertokey = KeysController.numbertokey
 local keys = KeysController.keys
@@ -24,10 +24,32 @@ Keyboard.__index = Keyboard
 Keyboard.keys = keys
 
 FFI.cdef[[
+    
     int GetAsyncKeyState(int vKey);
     void keybd_event (int key, int scan, int flags, int exittime);
     void mouse_event (int dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
+
+    typedef struct tagPOINT {
+        long x;
+        long y;
+    } POINT;
+    
+    int GetCursorPos(POINT *pt);
+    int SetCursorPos(int x, int y);
 ]]
+
+
+local function getMousePosition()
+    local pt = FFI.new("POINT")
+    C.GetCursorPos(pt)
+    return pt.x, pt.y
+end
+
+local function setMousePosition(x, y)
+    C.SetCursorPos(x, y)
+    return getMousePosition()
+end
+
 
 
 local function isKeyPressed(key)
@@ -58,6 +80,21 @@ end
 ---@param callback function
 function Keyboard:onReleased(callback)
     self.onReleasedCallback = callback
+end
+
+---Get the `mouse` position.
+---@return number,number
+function Keyboard:getMousePosition()
+    return getMousePosition()
+end
+
+---Set the `mouse` position.
+---@param x number
+---@param y number
+---@return number,number
+function Keyboard:setMousePosition(x, y)
+    setMousePosition(x, y)
+    return getMousePosition()
 end
 
 ---Check if a key is `pressing`.
@@ -138,7 +175,7 @@ end
 ---Update the `Keyboard` state.
 ---@return nil
 function Keyboard:update()
-    while true do
+ 
     for key = 1, 255 do
         if isKeyReleased(key) then
             if numbertokey[key] ~= nil then
@@ -163,7 +200,7 @@ function Keyboard:update()
             end
         end
     end
-end
+    
 end
 
 
@@ -203,9 +240,5 @@ function Keyboard:test()
         return true
     end
 end
-
-
-
-
 
 return Keyboard
