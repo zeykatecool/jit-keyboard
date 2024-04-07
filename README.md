@@ -1,5 +1,5 @@
 # jit-keyboard
-Keyboard module for LuaJIT and Luvit.
+Keyboard and mouse module for LuaJIT and Luvit.
 
  # Working on Lua
 Also you can use this package with portable `FFI` packages like [cffi-lua](https://github.com/q66/cffi-lua). Just change `ffi` to `cffi` and you are ready to use.
