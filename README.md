@@ -40,6 +40,7 @@ MyKeyboard:onReleased(function(key, timeholded)
         print("Caps Lock!")
     end
 end)
-
+while true do
 MyKeyboard:update()
+end
 ```
