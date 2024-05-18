@@ -8,6 +8,8 @@
 ]]
 ---@version JIT
 
+
+
 local FFI = require("ffi")
 local C = FFI.C
 local KeysController = require("deps.keys")
@@ -36,6 +38,9 @@ FFI.cdef[[
     
     int GetCursorPos(POINT *pt);
     int SetCursorPos(int x, int y);
+
+
+    
 ]]
 
 
@@ -67,6 +72,7 @@ function Keyboard:new()
     self = setmetatable({}, Keyboard)
     self.pressing_keys = {}
     self.key_holding_time = {}
+    self.short_cuts = {}
     return self
 end
 
@@ -113,6 +119,25 @@ end
 ---@param key string
 function Keyboard:isReleased(key)
     return not self:isPressing(key)
+end
+
+---Check if a key is `mouse` key.
+---@param key string
+---@return boolean|nil
+function Keyboard:isMouse(key)
+    if keytonumber[key] ~= nil then
+        if key:lower() == "lmb" then
+            return true
+        elseif key:lower() == "rmb" then
+            return true
+        elseif key:lower() == "mmb" then
+            return true
+        elseif key:lower() == "midbutton" then
+            return true
+        end
+        return false
+    end
+    return nil
 end
 
 
@@ -170,12 +195,28 @@ function Keyboard:SimulateKeyPress(tbl)
     return true
 end
 
+---Write a `word` or `words`.
+---@param wordorwords string
+function Keyboard:write(wordorwords)
+    for i = 1, #wordorwords do
+        local willWrite = wordorwords:sub(i, i):upper()
+        print(willWrite)
+        if willWrite == " " then
+            willWrite = "SPACE"
+        end
+        if willWrite == "." then
+            willWrite = "PERIOD"
+    end
+        self:SimulateKeyPress(willWrite)
+    end
+end
 
+
+local isReadingFromKeyboard = false
 
 ---Update the `Keyboard` state.
 ---@return nil
 function Keyboard:update()
- 
     for key = 1, 255 do
         if isKeyReleased(key) then
             if numbertokey[key] ~= nil then
@@ -218,7 +259,6 @@ function Keyboard:test()
         self:SimulateKeyPress("A")
         print("Simulating Arrow Down.")
         self:SimulateKeyPress("DOWN")
-
         print("Is LMB pressing?")
         print(self:isPressing("LMB"))
         print("Is RMB pressing?")
@@ -240,5 +280,93 @@ function Keyboard:test()
         return true
     end
 end
+
+
+FFI.cdef[[
+    typedef unsigned short WORD;
+    typedef unsigned long DWORD;
+    typedef wchar_t WCHAR;
+    typedef char CHAR;
+    typedef int BOOL;
+    typedef void* HANDLE;
+
+    typedef struct _KEY_EVENT_RECORD {
+        BOOL bKeyDown;
+        WORD wRepeatCount;
+        WORD wVirtualKeyCode;
+        WORD wVirtualScanCode;
+        union {
+            WCHAR UnicodeChar;
+            CHAR AsciiChar;
+        } uChar;
+        DWORD dwControlKeyState;
+    } KEY_EVENT_RECORD;
+
+    typedef struct _INPUT_RECORD {
+        WORD EventType;
+        union {
+            KEY_EVENT_RECORD KeyEvent;
+        } Event;
+    } INPUT_RECORD;
+
+    HANDLE GetStdHandle(DWORD nStdHandle);
+    BOOL ReadConsoleInputW(
+        HANDLE hConsoleInput,
+        INPUT_RECORD* lpBuffer,
+        DWORD nLength,
+        DWORD* lpNumberOfEventsRead
+    );
+]]
+
+local KEY_EVENT = 0x0001
+local STD_INPUT_HANDLE = -10
+
+local function readKeyEvent()
+    local inputRecord = FFI.new("INPUT_RECORD[1]")
+    local eventsRead = FFI.new("DWORD[1]")
+
+    local hConsole = C.GetStdHandle(STD_INPUT_HANDLE)
+
+    while true do
+        if C.ReadConsoleInputW(hConsole, inputRecord, 1, eventsRead) ~= 0 then
+            if inputRecord[0].EventType == KEY_EVENT and inputRecord[0].Event.KeyEvent.bKeyDown ~= 0 then
+                local char = inputRecord[0].Event.KeyEvent.uChar.UnicodeChar
+                if char ~= 0 then
+                    
+                    return char
+                end
+            end
+        end
+    end
+end
+
+---Read input while reading from the keyboard.
+---@param func function|nil
+---@return nil
+function Keyboard:read(func)
+    if type(func) == "function" then
+    else
+        func = function(char,input) end
+    end
+    local input = ""
+    local finished = false
+    isReadingFromKeyboard = true
+    while not finished do
+        local char = readKeyEvent()
+       func(char,input)
+        if char == 13 then
+            finished = true
+        elseif char == 8 then 
+            input = input:sub(1, -2)
+            io.write("\b \b")
+        else
+            input = input .. string.char(char)
+            io.write(string.char(char))
+        end
+    end
+
+    return input
+end
+
 
 return Keyboard
