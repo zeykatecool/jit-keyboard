@@ -12,7 +12,7 @@
 
 local FFI = require("ffi")
 local C = FFI.C
-local KeysController = require("deps.keys")
+local KeysController = require("engine.keys")
 local keytonumber = KeysController.keytonumber
 local numbertokey = KeysController.numbertokey
 local keys = KeysController.keys
@@ -76,16 +76,26 @@ function Keyboard:new()
     return self
 end
 
+local onpressed = function (a)
+    
+end
+
+local onreleased = function (a,b)
+
+end
+
 ---Set the callback function when a key is `pressed`.
 ---@param callback function
 function Keyboard:onPressed(callback)
-    self.onPressedCallback = callback
+    --self.onPressedCallback = callback
+    onpressed = callback
 end
 
 ---Set the callback function when a key is `released`.
 ---@param callback function
 function Keyboard:onReleased(callback)
-    self.onReleasedCallback = callback
+    --self.onReleasedCallback = callback
+    onreleased = callback
 end
 
 ---Get the `mouse` position.
@@ -223,7 +233,7 @@ function Keyboard:update()
             if self.pressing_keys[key] then
                 self.pressing_keys[key] = false
                 if self.onReleasedCallback then
-                    self.onReleasedCallback(numbertokey[key], os.clock() - self.key_holding_time[key])
+                    onreleased(numbertokey[key], os.clock() - self.key_holding_time[key])
                 end
             end
             end
@@ -235,7 +245,7 @@ function Keyboard:update()
                 self.pressing_keys[key] = true
                 self.key_holding_time[key] = os.clock()
                 if self.onPressedCallback then
-                    self.onPressedCallback(numbertokey[key])
+                    onpressed(numbertokey[key])
                 end
                 end
             end
