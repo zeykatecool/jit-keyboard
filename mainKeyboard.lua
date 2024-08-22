@@ -12,7 +12,7 @@
 
 local FFI = require("ffi")
 local C = FFI.C
-local KeysController = require("engine.keys")
+local KeysController = require("keys")
 local keytonumber = KeysController.keytonumber
 local numbertokey = KeysController.numbertokey
 local keys = KeysController.keys
